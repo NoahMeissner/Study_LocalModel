@@ -298,11 +298,99 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
   margin-top: 14px;
   line-height: 1.6;
 }
+
+/* --- Mockup screens --- */
+.larp-lead { font-size: 14px; line-height: 1.6; margin: 0 0 14px; }
+.larp-note { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 10px 0 0; }
+
+/* Screen 1: consent summary cards */
+.larp-summary-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #FBFAF7;
+  margin: 4px 0 14px;
+  overflow: hidden;
+}
+.larp-summary-cols > div { padding: 12px 14px; border-right: 1px solid var(--line); }
+.larp-summary-cols > div:last-child { border-right: none; }
+.larp-summary-cols .k { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.larp-summary-cols .v { font-size: 13px; font-weight: 600; line-height: 1.35; }
+@media (max-width: 560px){
+  .larp-summary-cols { grid-template-columns: 1fr; }
+  .larp-summary-cols > div { border-right: none; border-bottom: 1px solid var(--line); }
+  .larp-summary-cols > div:last-child { border-bottom: none; }
+}
+
+/* Screen 2: two execution boxes */
+.larp-two-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 18px; }
+@media (max-width: 560px){ .larp-two-box { grid-template-columns: 1fr; } }
+.larp-mode-box { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; background: #FBFAF7; }
+.larp-mode-box .h { font-weight: 700; font-size: 13.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.larp-mode-box.local .h { color: var(--local); }
+.larp-mode-box.cloud .h { color: var(--cloud); }
+.larp-mode-box .d { font-size: 13px; line-height: 1.55; }
+.larp-dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.larp-dot.local { background: var(--local); }
+.larp-dot.cloud { background: var(--cloud); }
+
+/* Screen 3: satisfactory-answer example */
+.larp-example { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 8px 0 14px; }
+.larp-example .head {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+  background: #FBFAF7; font-size: 12.5px;
+}
+.larp-example .head .lbl { color: var(--muted); }
+.larp-example .head .ans { font-family: var(--mono); font-weight: 600; }
+.larp-ex-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 14px; font-family: var(--mono); font-size: 12.5px;
+  line-height: 1.5; border-bottom: 1px solid var(--line);
+}
+.larp-ex-row:last-child { border-bottom: none; }
+.larp-mark {
+  flex: none; width: 16px; height: 16px; border-radius: 4px;
+  display: grid; place-items: center; margin-top: 1px;
+  font-family: var(--sans); font-size: 11px; font-weight: 700; color: #fff;
+}
+.larp-mark.ok { background: var(--local); }
+.larp-mark.no { background: var(--warn); }
+
+/* Screen 4 + rating: probability-band grid */
+.larp-band-grid { margin: 4px 0; }
+.larp-band-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 560px){ .larp-band-row { grid-template-columns: 1fr; } }
+.larp-band { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 12px 8px; text-align: center; }
+.larp-band .lab { font-size: 12.5px; font-weight: 600; line-height: 1.25; }
+.larp-band .pct { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+button.larp-band { cursor: pointer; font: inherit; color: var(--ink); }
+button.larp-band:hover { border-color: var(--muted); }
+button.larp-band.sel { border-color: var(--cloud); background: var(--cloud-soft); }
+.larp-band-divider {
+  display: flex; align-items: center; gap: 10px; margin: 8px 0;
+  color: var(--muted); font-family: var(--mono); font-size: 11px;
+}
+.larp-band-divider::before, .larp-band-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Screen 4: "a few things to expect" */
+.larp-instinct {
+  border: 1px solid var(--line); background: #FBFAF7; border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; line-height: 1.55; margin: 14px 0;
+}
+.larp-expect { list-style: none; padding: 0; margin: 8px 0 0; }
+.larp-expect li { position: relative; padding-left: 22px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+.larp-expect li::before {
+  content: ""; position: absolute; left: 0; top: 3px;
+  width: 11px; height: 11px; border: 1px solid var(--muted); border-radius: 3px;
+}
 </style>
 
 <script>
 (function(){
-  const RATINGS = ["Never","Very unlikely","Unlikely","Likely","Very likely","Always"];
+  const RATINGS = ["Extremely unlikely","Very unlikely","Unlikely","Likely","Very likely","Extremely likely"];
+  const RATING_BANDS = ["0\u201317%","17\u201333%","33\u201350%","50\u201367%","67\u201383%","83\u2013100%"];
   const FREQ_OPTIONS = ["Never","Less than weekly","1\u20132 days/week","3\u20134 days/week","5\u20136 days/week","Daily"];
 
   const state = {
@@ -322,8 +410,8 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
   };
 
   const STEPS = [
-    "Consent","Upload prompts","Introduction",
-    "Rating task","Post-task","Demographics","Done"
+    "Consent","Upload prompts","Background","Satisfactory answer",
+    "Rating scale","Rating task","Post-task","Demographics","Done"
   ];
 
 
@@ -367,16 +455,16 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
   function buildOutputCSV(){
     const headers = [
       "participant_id","prompt_id","category","which_of_the_following","prompt_text",
-      "rating","response_time_ms",
+      "rating","rating_level","response_time_ms",
       "attention_check","reflection",
       "gender","age","education","occupation","genai_freq_post"
     ];
     const lines = [headers.join(",")];
     state.rows.forEach(r => {
-      const rt = state.ratings[r.prompt_id] || {rating:"", ms:""};
+      const rt = state.ratings[r.prompt_id] || {rating:"", level:"", ms:""};
       const line = [
         state.participantId, r.prompt_id, r.category, r.which_of_the_following, r.prompt_text,
-        rt.rating, rt.ms,
+        rt.rating, (rt.level ?? ""), rt.ms,
         state.attention, state.reflection,
         state.demo.gender, state.demo.age, state.demo.education, state.demo.occupation, state.demo.freq2
       ].map(csvEscape).join(",");
@@ -433,10 +521,12 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
 
     if(state.step === 0) stepConsent(p, body, foot);
     else if(state.step === 1) stepUpload(p, body, foot);
-    else if(state.step === 2) stepFraming(p, body, foot);
-    else if(state.step === 3) stepRating(p, body, foot);
-    else if(state.step === 4) stepPostTask(p, body, foot);
-    else if(state.step === 5) stepDemographics(p, body, foot);
+    else if(state.step === 2) stepBackground(p, body, foot);
+    else if(state.step === 3) stepSatisfactory(p, body, foot);
+    else if(state.step === 4) stepScale(p, body, foot);
+    else if(state.step === 5) stepRating(p, body, foot);
+    else if(state.step === 6) stepPostTask(p, body, foot);
+    else if(state.step === 7) stepDemographics(p, body, foot);
     else stepDone(p, body, foot);
   }
 
@@ -454,9 +544,41 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
     return b;
   }
 
+  // Six-point probability-band scale, three-below / three-above with the 50% boundary.
+  // opts.interactive -> renders buttons; opts.selected (0-5) marks the chosen band;
+  // opts.onSelect(level) is called on click.
+  function buildBandGrid(opts){
+    opts = opts || {};
+    const wrap = document.createElement("div");
+    wrap.className = "larp-band-grid";
+    const rowTop = document.createElement("div"); rowTop.className = "larp-band-row";
+    const rowBot = document.createElement("div"); rowBot.className = "larp-band-row";
+    RATINGS.forEach((label, level) => {
+      const cell = document.createElement(opts.interactive ? "button" : "div");
+      cell.className = "larp-band" + (opts.selected === level ? " sel" : "");
+      cell.innerHTML = `<div class="lab">${label}</div><div class="pct">${RATING_BANDS[level]}</div>`;
+      if(opts.interactive) cell.onclick = () => opts.onSelect(level);
+      (level < 3 ? rowTop : rowBot).appendChild(cell);
+    });
+    const divider = document.createElement("div");
+    divider.className = "larp-band-divider";
+    divider.textContent = "50%";
+    wrap.appendChild(rowTop);
+    wrap.appendChild(divider);
+    wrap.appendChild(rowBot);
+    return wrap;
+  }
+
   function stepConsent(p, body, foot){
-    heading(p, "Consent to participate");
+    heading(p, "Before you begin");
     body.innerHTML = `
+      <p class="larp-lead">You are invited to take part in a study about how people judge what small AI models can do. Participation is voluntary and you may stop at any time without giving a reason.</p>
+      <div class="larp-summary-cols">
+        <div><div class="k">What you'll do</div><div class="v">Rate ${state.rows.length || 28} short prompts</div></div>
+        <div><div class="k">How long</div><div class="v">About 15 minutes</div></div>
+        <div><div class="k">Data collected</div><div class="v">Ratings, timing, demographics</div></div>
+      </div>
+      <p class="larp-note">Responses are stored without identifying information and reported only in aggregate. You will not be asked to answer the prompts yourself, and there are no right or wrong responses.</p>
       <div class="larp-consent-box">
         <p>You are invited to participate in the online study which investigates knowledge about local model capabilities. The study is conducted by Noah Meissner, Samuel Bullard, Federico Mizzaro and supervised by Dr. David Elsweiler from the University of Regensburg. The study with estimated 30 participants will take place in the period from 2026-08-01 to 2026-08-15. Please note:</p>
         <ul>
@@ -574,23 +696,82 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
     showStatus();
   }
 
-  function stepFraming(p, body, foot){
-    heading(p, "Before you begin");
+  // Screen 2 of 4 - background
+  function stepBackground(p, body, foot){
+    heading(p, "Two places an AI model can run");
     body.innerHTML = `
-      <p style="line-height:1.6; font-size:14px;">
-        A <strong>local model</strong> runs directly on a device (e.g. a laptop or phone), without an internet
-        connection, and is considerably smaller than a <strong>cloud model</strong>.
-        You will now see ${state.rows.length || 28} short questions. For each one, please judge
-        whether a small, local model like that could answer it satisfactorily.
-      </p>
-      <p style="line-height:1.6; font-size:14px;">
-        There is no feedback during the task. Use the scale that best reflects your judgement for each prompt.
-      </p>
+      <div class="larp-two-box">
+        <div class="larp-mode-box local">
+          <div class="h"><span class="larp-dot local"></span>On your device</div>
+          <div class="d">A smaller model runs locally. Nothing leaves your machine, and it uses less energy.</div>
+        </div>
+        <div class="larp-mode-box cloud">
+          <div class="h"><span class="larp-dot cloud"></span>In the cloud</div>
+          <div class="d">A larger model runs on remote servers. Your request is sent over the internet.</div>
+        </div>
+      </div>
+      <p class="larp-lead">Both kinds of model answer the same sorts of questions. Which one suits a given request depends on the request.</p>
+      <p class="larp-lead">In this study you will see prompts one at a time and estimate how likely a specific local model, <strong>Gemma4&ndash;e2b</strong>, is to answer each one satisfactorily. You will not answer the prompts, and you will not see the model&rsquo;s answers.</p>
     `;
     p.appendChild(body);
     p.appendChild(foot);
     const back = navBtn("Back", () => { state.step = 1; render(); }, {ghost:true});
-    const next = navBtn("Start rating", () => { state.idx = 0; state.itemStart = Date.now(); state.step = 3; render(); });
+    const next = navBtn("Continue", () => { state.step = 3; render(); });
+    foot.appendChild(back); foot.appendChild(next);
+  }
+
+  // Screen 3 of 4 - what counts as satisfactory
+  function stepSatisfactory(p, body, foot){
+    heading(p, "What counts as a satisfactory answer");
+    body.innerHTML = `
+      <p class="larp-lead">Every prompt in this study has a known correct answer. An answer is <strong>satisfactory</strong> if it gives that answer.</p>
+      <p class="larp-lead">Think of it as a panel of experts deciding by majority, each with the correct answer in front of them, asked only one thing: does the model&rsquo;s response say the same thing?</p>
+      <p class="larp-note">Wording, length, and style are not part of the judgement. Two answers that say the same thing in different words are both satisfactory. A well&ndash;written answer that says something else is not.</p>
+      <div class="larp-example">
+        <div class="head"><span class="lbl">Correct answer</span><span class="ans">4.0 L</span></div>
+        <div class="larp-ex-row"><span class="larp-mark ok">&#10003;</span><span>The volume doubles, so 4.0 L.</span></div>
+        <div class="larp-ex-row"><span class="larp-mark ok">&#10003;</span><span>Four litres.</span></div>
+        <div class="larp-ex-row"><span class="larp-mark no">&#10007;</span><span>This follows from the gas laws, which relate volume and temperature.</span></div>
+      </div>
+      <p class="larp-note">You will not see the correct answers during the task, and you are not expected to work them out yourself.</p>
+    `;
+    p.appendChild(body);
+    p.appendChild(foot);
+    const back = navBtn("Back", () => { state.step = 2; render(); }, {ghost:true});
+    const next = navBtn("Continue", () => { state.step = 4; render(); });
+    foot.appendChild(back); foot.appendChild(next);
+  }
+
+  // Screen 4 of 4 - the rating scale
+  function stepScale(p, body, foot){
+    heading(p, "The rating scale");
+    body.innerHTML = `
+      <p class="larp-lead">Your rating estimates how often the local model would answer a given prompt correctly, if it were asked the same prompt repeatedly.</p>
+      <p class="larp-note">The six options divide that proportion into equal ranges covering every possibility, three below an even chance and three above.</p>
+    `;
+    body.appendChild(buildBandGrid());
+
+    const instinct = document.createElement("div");
+    instinct.className = "larp-instinct";
+    instinct.textContent = "Answer on instinct. Many prompts are specialist questions from fields you may not know, and you are not expected to work them out. Judging the prompt without knowing the answer is the task.";
+    body.appendChild(instinct);
+
+    const expect = document.createElement("div");
+    expect.innerHTML = `
+      <div class="larp-field">A few things to expect</div>
+      <ul class="larp-expect">
+        <li>You cannot return to a previous prompt once you&rsquo;ve moved on.</li>
+        <li>Every prompt needs a rating &mdash; there is no skip or &ldquo;don&rsquo;t know&rdquo; option.</li>
+        <li>You will not see the model&rsquo;s answers or be told whether your ratings were accurate.</li>
+        <li>One item asks you to select a specific option instead of giving a rating. It checks that instructions are being read.</li>
+      </ul>
+    `;
+    body.appendChild(expect);
+
+    p.appendChild(body);
+    p.appendChild(foot);
+    const back = navBtn("Back", () => { state.step = 3; render(); }, {ghost:true});
+    const next = navBtn("Start rating", () => { state.idx = 0; state.itemStart = Date.now(); state.step = 5; render(); });
     foot.appendChild(back); foot.appendChild(next);
   }
 
@@ -615,39 +796,31 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
 
     const q = document.createElement("div");
     q.className = "larp-field";
-    q.textContent = "If the local model were asked to solve this prompt, how likely is it that the local model \localmodel would produce a satisfactory answer ?";
+    q.textContent = "If the local model were asked to solve this prompt, how likely is it that the local model Gemma4-e2b would produce a satisfactory answer?";
     body.appendChild(q);
 
-    const scale = document.createElement("div");
-    scale.className = "larp-scale";
-    const current = state.ratings[row.prompt_id]?.rating;
-    RATINGS.forEach(r => {
-      const b = document.createElement("button");
-      b.className = "larp-scale-btn" + (current === r ? " sel" : "");
-      b.textContent = r;
-      b.onclick = () => {
+    const current = state.ratings[row.prompt_id];
+    body.appendChild(buildBandGrid({
+      interactive: true,
+      selected: current ? current.level : undefined,
+      onSelect: (level) => {
         const ms = state.itemStart ? (Date.now() - state.itemStart) : "";
-        state.ratings[row.prompt_id] = { rating: r, ms };
+        state.ratings[row.prompt_id] = { rating: RATINGS[level], level: level, ms };
         renderPanel();
-      };
-      scale.appendChild(b);
-    });
-    body.appendChild(scale);
+      }
+    }));
 
     p.appendChild(body);
     p.appendChild(foot);
-    const back = navBtn("Back", () => {
-      if(state.idx === 0){ state.step = 2; } else { state.idx -= 1; }
-      state.itemStart = Date.now();
-      render();
-    }, {ghost:true});
+    // Forward-only navigation: participants are told they cannot return to a previous prompt.
     const isLast = state.idx === total - 1;
     const next = navBtn(isLast ? "Continue to wrap-up" : "Next prompt", () => {
-      if(isLast){ state.step = 4; } else { state.idx += 1; }
+      if(isLast){ state.step = 6; } else { state.idx += 1; }
       state.itemStart = Date.now();
       render();
     }, {disabled: !current});
-    foot.appendChild(back); foot.appendChild(next);
+    foot.appendChild(document.createElement("span"));
+    foot.appendChild(next);
   }
 
   function stepPostTask(p, body, foot){
@@ -663,9 +836,9 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
     `;
     p.appendChild(body);
     p.appendChild(foot);
-    const back = navBtn("Back", () => { state.step = 3; render(); }, {ghost:true});
-    const next = navBtn("Continue", () => { state.step = 5; render(); });
-    foot.appendChild(back); foot.appendChild(next);
+    const next = navBtn("Continue", () => { state.step = 7; render(); });
+    foot.appendChild(document.createElement("span"));
+    foot.appendChild(next);
     body.querySelector("#larp-att").onchange = (e) => state.attention = e.target.value;
     body.querySelector("#larp-reflect").oninput = (e) => state.reflection = e.target.value;
   }
@@ -695,8 +868,8 @@ textarea.larp-input { resize: vertical; min-height: 70px; }
     `;
     p.appendChild(body);
     p.appendChild(foot);
-    const back = navBtn("Back", () => { state.step = 4; render(); }, {ghost:true});
-    const next = navBtn("Finish", () => { state.step = 6; render(); });
+    const back = navBtn("Back", () => { state.step = 6; render(); }, {ghost:true});
+    const next = navBtn("Finish", () => { state.step = 8; render(); });
     foot.appendChild(back); foot.appendChild(next);
     body.querySelector("#larp-gender").onchange = e => state.demo.gender = e.target.value;
     body.querySelector("#larp-age").oninput = e => state.demo.age = e.target.value;
