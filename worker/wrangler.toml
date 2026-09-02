@@ -10,7 +10,7 @@ id = "REPLACE_WITH_KV_NAMESPACE_ID"      # wrangler kv namespace create RESULTS
 ALLOWED_ORIGIN = "https://noahmeissner.github.io"
 MAIL_TO = "noah.meissner@stud.uni-regensburg.de"
 # MAIL_FROM = "LARP study <study@YOUR_MAILGUN_DOMAIN>"
-# MAILGUN_API_BASE = "https://api.mailgun.net"     # US region; EU is the default
+# MAILGUN_API_BASE = "https://api.eu.mailgun.net"  # only if the account moves to the EU region
 
 # Secrets (wrangler secret put <NAME>):
 #   MAILGUN_API_KEY, MAILGUN_DOMAIN, STUDY_TOKEN (optional shared token; must

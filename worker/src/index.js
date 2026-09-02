@@ -34,7 +34,7 @@ async function sendMail(env, payload) {
     + `${payload.n_rated}/${payload.n_prompts} prompts rated. CSV attached.`);
   form.append("attachment", new Blob([payload.csv], { type: "text/csv" }),
     `larp_${payload.participant_id}.csv`);
-  const base = env.MAILGUN_API_BASE || "https://api.eu.mailgun.net";   // EU region default
+  const base = env.MAILGUN_API_BASE || "https://api.mailgun.net";      // US region (the account's); EU: api.eu.mailgun.net
   const res = await fetch(`${base}/v3/${env.MAILGUN_DOMAIN}/messages`, {
     method: "POST",
     headers: { Authorization: "Basic " + btoa(`api:${env.MAILGUN_API_KEY}`) },
