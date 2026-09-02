@@ -604,8 +604,28 @@
     };
   }
 
+  // A short celebration the first time the Done screen appears (not on reload,
+  // and not for people who asked their OS for reduced motion).
+  function celebrate(){
+    if(state.celebrated) return;
+    state.celebrated = true; save();
+    if(typeof window.confetti !== "function") return;
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors = ["#2E7D5B", "#3B4FB8", "#E8A33D", "#D9536F"];
+    const bursts = [
+      { x: window.innerWidth * 0.50, y: window.innerHeight * 0.45 },
+      { x: window.innerWidth * 0.25, y: window.innerHeight * 0.35 },
+      { x: window.innerWidth * 0.75, y: window.innerHeight * 0.35 },
+    ];
+    bursts.forEach((position, i) => setTimeout(() => {
+      try { window.confetti({ position, count: 90, velocity: 220, fade: true, color: colors }); }
+      catch(e){ /* decoration only; never let it break the Done screen */ }
+    }, i * 250));
+  }
+
   function stepDone(p, body, foot){
-    heading(p, "Thank you!", "Your responses are being submitted.");
+    heading(p, "Thank you!", state.submitted ? "Your responses were received." : "Your responses are being submitted.");
+    celebrate();
     const rated = Object.keys(state.ratings).length;
     body.innerHTML = `
       <div class="larp-summary-row"><span>Participant ID</span><span>${state.participantId}</span></div>
@@ -645,6 +665,7 @@
     submitWithRetry(payload, msg => { status.textContent = msg; }).then(r => {
       if(r.ok){
         state.submitted = true; save();
+        const sub = p.querySelector(".larp-sub"); if(sub) sub.textContent = "Your responses were received.";
         status.textContent = "Your responses were received. Thank you — you may close this page. (A copy is available below.)";
       } else {
         queueUnsent(payload);
