@@ -25,10 +25,10 @@ function json(env, status, body) {
   });
 }
 
-async function sendMail(env, payload) {
+async function sendMailTo(env, payload, recipient) {
   const form = new FormData();
   form.append("from", env.MAIL_FROM || `LARP study <study@${env.MAILGUN_DOMAIN}>`);
-  form.append("to", env.MAIL_TO);
+  form.append("to", recipient);
   form.append("subject", `LARP RQ2 - ${payload.participant_id}`);
   form.append("text", `Participant ${payload.participant_id} finished at ${payload.submitted_at}: `
     + `${payload.n_rated}/${payload.n_prompts} prompts rated. CSV attached.`);
@@ -41,6 +41,19 @@ async function sendMail(env, payload) {
     body: form,
   });
   if (!res.ok) throw new Error(`mailgun ${res.status}: ${(await res.text()).slice(0, 200)}`);
+}
+
+// One message per recipient: on a sandbox domain Mailgun rejects the WHOLE send if
+// any recipient is not yet an authorized (confirmed) address, which would have
+// silenced every copy while one inbox was still pending confirmation.
+async function sendMail(env, payload) {
+  const recipients = String(env.MAIL_TO || "").split(",").map(s => s.trim()).filter(Boolean);
+  const results = await Promise.allSettled(recipients.map(r => sendMailTo(env, payload, r)));
+  const sent = results.filter(r => r.status === "fulfilled").length;
+  results.forEach((r, i) => {
+    if (r.status === "rejected") console.error("mail failed", payload.participant_id, recipients[i], String(r.reason));
+  });
+  return { sent, total: recipients.length };
 }
 
 export default {
@@ -74,12 +87,14 @@ export default {
       metadata: { n_rated: payload.n_rated, n_prompts: payload.n_prompts },
     });
 
-    let mail = "sent";
+    // Stored already: mail is best-effort. A partial or total mail failure is
+    // still a success for the participant; the copy is in KV and each failed
+    // recipient is visible in the Worker logs.
+    let mail;
     try {
-      await sendMail(env, payload);
+      const { sent, total } = await sendMail(env, payload);
+      mail = sent === 0 ? "stored_only" : `sent ${sent}/${total}`;
     } catch (err) {
-      // Stored but not mailed: still a success for the participant; the copy is
-      // in KV and the failure is visible in the Worker logs.
       console.error("mail failed", key, String(err));
       mail = "stored_only";
     }
