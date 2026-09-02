@@ -1,0 +1,17 @@
+name = "larp-study-relay"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+[[kv_namespaces]]
+binding = "RESULTS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"      # wrangler kv namespace create RESULTS
+
+[vars]
+ALLOWED_ORIGIN = "https://noahmeissner.github.io"
+MAIL_TO = "noah.meissner@stud.uni-regensburg.de"
+# MAIL_FROM = "LARP study <study@YOUR_MAILGUN_DOMAIN>"
+# MAILGUN_API_BASE = "https://api.mailgun.net"     # US region; EU is the default
+
+# Secrets (wrangler secret put <NAME>):
+#   MAILGUN_API_KEY, MAILGUN_DOMAIN, STUDY_TOKEN (optional shared token; must
+#   match window.LARP_SUBMIT_TOKEN in index.html)

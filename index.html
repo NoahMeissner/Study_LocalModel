@@ -9,6 +9,13 @@
 </head>
 <body>
   <div id="larp-root"></div>
+  <script>
+    // Deployment config: the relay that receives finished sessions (see worker/).
+    // Leave LARP_SUBMIT_URL empty to fall back to download + email only.
+    window.LARP_SUBMIT_URL = "";
+    window.LARP_SUBMIT_TOKEN = "";
+  </script>
+  <script defer src="vendor/papaparse.min.js"></script>
   <script defer src="katex/katex.min.js"></script>
   <script defer src="katex/auto-render.min.js"></script>
   <script defer src="app.js"></script>

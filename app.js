@@ -19,6 +19,31 @@
     consentChecked: false
   };
 
+  // Progress survives a refresh or a closed tab: the whole state is mirrored to
+  // localStorage on every render. "Start over" is the only way to discard it,
+  // so a lab machine shared between participants needs that click in between.
+  const STORE_KEY = "larp.session.v1";
+  const UNSENT_KEY = "larp.unsent.v1";
+  function save(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){ /* quota/private mode: run without persistence */ }
+  }
+  function restore(){
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return false;
+      const saved = JSON.parse(raw);
+      if(!saved || typeof saved.step !== "number") return false;
+      Object.assign(state, saved);
+      state.itemStart = Date.now();
+      return true;
+    } catch(e){ return false; }
+  }
+  function startOver(){
+    if(!confirm("Discard this session and start from the beginning?")) return;
+    try { localStorage.removeItem(STORE_KEY); } catch(e){}
+    location.reload();
+  }
+
   const STEPS = [
     "Consent","Upload prompts","Background","Satisfactory answer",
     "Rating scale","Rating task","Post-task","Demographics","Done"
@@ -26,34 +51,25 @@
 
 
 
+  // Papa Parse handles quoted fields with embedded newlines/commas — the
+  // hand-rolled splitter silently dropped any prompt containing a line break.
   function parseCSV(text){
-    const rows = [];
-    const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length);
-    if(!lines.length) return {rows:[], error:"File is empty."};
-    const header = splitCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: "greedy",
+      transformHeader: h => h.trim().toLowerCase() });
+    const fatal = parsed.errors.filter(e => e.type !== "FieldMismatch");
+    if(fatal.length) return {rows:[], error: fatal[0].message};
+    const header = parsed.meta.fields || [];
     const required = ["prompt_id","category","which_of_the_following","prompt_text"];
     for(const r of required){
       if(!header.includes(r)) return {rows:[], error:"Missing column: " + r};
     }
-    for(let i=1;i<lines.length;i++){
-      const cells = splitCSVLine(lines[i]);
-      if(cells.length < header.length) continue;
-      const obj = {};
-      header.forEach((h,idx) => obj[h] = (cells[idx]||"").trim());
-      rows.push(obj);
-    }
+    const rows = parsed.data
+      .map(obj => { const o = {}; for(const k in obj) o[k] = String(obj[k] ?? "").trim(); return o; })
+      .filter(o => o.prompt_id && o.prompt_text);
+    if(!rows.length) return {rows:[], error:"File is empty."};
+    const ids = new Set(rows.map(r => r.prompt_id));
+    if(ids.size !== rows.length) return {rows:[], error:"Duplicate prompt_id values in file."};
     return {rows, error:null};
-  }
-  function splitCSVLine(line){
-    const out = []; let cur = ""; let inQ = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){ inQ = !inQ; continue; }
-      if(ch === ',' && !inQ){ out.push(cur); cur = ""; continue; }
-      cur += ch;
-    }
-    out.push(cur);
-    return out;
   }
 
   function csvEscape(v){
@@ -109,7 +125,8 @@
           <div class="larp-eyebrow">LARP \u2014 Study Platform</div>
           <h1 class="larp-title">Can a Local Model Solve this?</h1>
         </div>
-        <div class="larp-pid">Participant ID: ${state.participantId}</div>
+        <div class="larp-pid">Participant ID: ${state.participantId}
+          ${state.step > 0 ? '<button class="larp-btn ghost small" id="larp-start-over" type="button">Start over</button>' : ''}</div>
       </div>
       <div class="larp-layout">
         <div class="larp-stepper">
@@ -118,10 +135,13 @@
         <div class="larp-panel" id="larp-panel"></div>
       </div>
     `;
+    const so = root.querySelector("#larp-start-over");
+    if(so) so.onclick = startOver;
     renderPanel();
   }
 
   function renderPanel(){
+    save();
     const p = document.getElementById("larp-panel");
     p.innerHTML = "";
     const body = document.createElement("div");
@@ -289,6 +309,7 @@
       reader.onload = (e) => {
         const {rows, error} = parseCSV(e.target.result);
         state.rows = rows; state.csvError = error;
+        if(rows.length && rows[0].participant_id) state.participantId = rows[0].participant_id;
         showStatus();
       };
       reader.readAsText(file);
@@ -506,21 +527,102 @@
     body.querySelector("#larp-freq2").onchange = e => state.demo.freq2 = e.target.value;
   }
 
+  // ── Submission ──────────────────────────────────────────────────────────
+  // POST the finished CSV to the relay (worker/), which stores it and emails it.
+  // Retries with backoff on network failure / 5xx / timeout; a 4xx is a bug on our
+  // side and is not retried. Whatever happens, the download button stays: the
+  // participant always leaves with their file, and an unsent copy is queued in
+  // localStorage and retried on the next page load.
+  const SUBMIT_URL = window.LARP_SUBMIT_URL || "";
+  const SUBMIT_TOKEN = window.LARP_SUBMIT_TOKEN || "";
+  const RETRY_DELAYS_MS = [1000, 3000, 9000];
+  const REQUEST_TIMEOUT_MS = 15000;
+
+  async function postOnce(payload){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(SUBMIT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Study-Token": SUBMIT_TOKEN },
+        body: JSON.stringify(payload),
+        signal: ctrl.signal
+      });
+      if(res.ok) return { ok: true };
+      return { ok: false, retryable: res.status >= 500, detail: "HTTP " + res.status };
+    } catch(err){
+      const timedOut = err && err.name === "AbortError";
+      return { ok: false, retryable: true, detail: timedOut ? "timeout" : (err && err.message) || "network error" };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function submitWithRetry(payload, onStatus){
+    if(!SUBMIT_URL) return { ok: false, detail: "no submit endpoint configured" };
+    let last = null;
+    for(let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++){
+      if(attempt > 0){
+        onStatus && onStatus(`Sending failed (${last.detail}) — retrying (${attempt}/${RETRY_DELAYS_MS.length})…`);
+        await new Promise(r => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
+      } else {
+        onStatus && onStatus("Sending your responses…");
+      }
+      last = await postOnce(payload);
+      if(last.ok) return last;
+      if(!last.retryable) break;
+    }
+    return last;
+  }
+
+  function queueUnsent(payload){
+    try {
+      const q = JSON.parse(localStorage.getItem(UNSENT_KEY) || "[]");
+      if(!q.some(p => p.participant_id === payload.participant_id)) q.push(payload);
+      localStorage.setItem(UNSENT_KEY, JSON.stringify(q));
+    } catch(e){}
+  }
+  async function flushUnsent(){
+    let q = [];
+    try { q = JSON.parse(localStorage.getItem(UNSENT_KEY) || "[]"); } catch(e){ return; }
+    if(!q.length || !SUBMIT_URL) return;
+    const remaining = [];
+    for(const payload of q){
+      const r = await submitWithRetry(payload);
+      if(!r.ok) remaining.push(payload);
+    }
+    try { localStorage.setItem(UNSENT_KEY, JSON.stringify(remaining)); } catch(e){}
+  }
+
+  function buildPayload(){
+    return {
+      participant_id: state.participantId,
+      submitted_at: new Date().toISOString(),
+      n_prompts: state.rows.length,
+      n_rated: Object.keys(state.ratings).length,
+      csv: buildOutputCSV()
+    };
+  }
+
   function stepDone(p, body, foot){
-    heading(p, "Thank you!", "Your responses are ready to download.");
+    heading(p, "Thank you!", "Your responses are being submitted.");
     const rated = Object.keys(state.ratings).length;
     body.innerHTML = `
       <div class="larp-summary-row"><span>Participant ID</span><span>${state.participantId}</span></div>
       <div class="larp-summary-row"><span>Prompts rated</span><span>${rated} / ${state.rows.length}</span></div>
-      <div class="larp-mail-box">
-        1.&nbsp;Download the annotated CSV.<br/>
-        2.&nbsp;Manually attach the file to an email to <strong>noah.meissner@stud.uni-regensburg.de</strong>
-        (direct in-browser sending isn't used, for privacy reasons).<br/>
+      <div class="larp-mail-box" id="larp-submit-status">Sending your responses…</div>
+      <div class="larp-mail-box" id="larp-fallback" style="display:none;">
+        Automatic sending did not go through. Please:<br/>
+        1.&nbsp;Download the annotated CSV below.<br/>
+        2.&nbsp;Attach the file to an email to <strong>noah.meissner@stud.uni-regensburg.de</strong><br/>
         3.&nbsp;Subject line: <em>LARP RQ2 \u2013 ${state.participantId}</em>
       </div>
     `;
     p.appendChild(body);
     p.appendChild(foot);
+    const status = body.querySelector("#larp-submit-status");
+    const fallback = body.querySelector("#larp-fallback");
+
     const dl = navBtn("Download annotated CSV", () => {
       const csv = buildOutputCSV();
       const blob = new Blob([csv], {type: "text/csv"});
@@ -531,10 +633,28 @@
       URL.revokeObjectURL(url);
     });
     const mail = navBtn("Open email draft", () => {
-      window.open(`mailto:study@example.edu?subject=${encodeURIComponent("LARP RQ2 - " + state.participantId)}&body=${encodeURIComponent("Attached is my annotated CSV file from the LARP study.")}`, "_blank");
+      window.open(`mailto:noah.meissner@stud.uni-regensburg.de?subject=${encodeURIComponent("LARP RQ2 - " + state.participantId)}&body=${encodeURIComponent("Attached is my annotated CSV file from the LARP study.")}`, "_blank");
     }, {ghost:true});
     foot.appendChild(mail); foot.appendChild(dl);
+
+    if(state.submitted){
+      status.textContent = "Your responses were received. You may close this page.";
+      return;
+    }
+    const payload = buildPayload();
+    submitWithRetry(payload, msg => { status.textContent = msg; }).then(r => {
+      if(r.ok){
+        state.submitted = true; save();
+        status.textContent = "Your responses were received. Thank you — you may close this page. (A copy is available below.)";
+      } else {
+        queueUnsent(payload);
+        status.textContent = "Automatic sending failed: " + r.detail + ".";
+        fallback.style.display = "";
+      }
+    });
   }
 
+  restore();
+  flushUnsent();
   render();
 })();
