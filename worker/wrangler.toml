@@ -8,7 +8,7 @@ id = "dae43b94928f485d81a8f4e55eae8c44"
 
 [vars]
 ALLOWED_ORIGIN = "https://noahmeissner.github.io"
-MAIL_TO = "Noah.Meissner@stud.uni-regensburg.de, samuel.bullard@stud.uni-regensburg.de"
+MAIL_TO = "samuel.bullard@stud.uni-regensburg.de, Noah.Meissner@stud.uni-regensburg.de, federico.mizzaro@stud.uni-regensburg.de"
 MAIL_FROM = "LARP study <postmaster@sandboxe4317a3c9f2d440184b19375b31e9555.mailgun.org>"
 # MAILGUN_API_BASE = "https://api.eu.mailgun.net"  # only if the account moves to the EU region
 
