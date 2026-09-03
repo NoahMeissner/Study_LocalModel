@@ -7,6 +7,12 @@ Math in prompts renders with a vendored KaTeX (`katex/`, v0.16.47). The prompt C
 must carry math between `\( \)` (inline), `\[ \]` or `$$ $$` (display) delimiters;
 bare `$` is deliberately not a delimiter so dollar amounts in prompts stay text.
 
+## Stimulus (2026-09-03)
+
+The rating screen shows the prompt text alone — no category label — as the
+preregistration's stimulus section requires. `category` stays in the CSV because the
+result export carries it.
+
 ## Robustness (2026-09-02)
 
 - **CSV parsing** uses vendored Papa Parse (`vendor/`): quoted multi-line prompts

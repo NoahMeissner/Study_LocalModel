@@ -421,9 +421,9 @@
 
     const card = document.createElement("div");
     card.className = "larp-prompt-card";
-    const meta = document.createElement("div");
-    meta.className = "larp-prompt-meta";
-    meta.textContent = row.category || "\u2014";
+    // The preregistration shows the prompt on its own: no category label, no
+    // reference answer, no model output. The category stays in the CSV for the
+    // analysis export only. The attention check announces itself in its text.
     const text = document.createElement("div");
     text.className = "larp-prompt-text";
     // textContent, never innerHTML: prompt text is data (it may contain "<" or "&").
@@ -439,7 +439,6 @@
                      {left: "$$", right: "$$", display: true}]
       });
     }
-    card.appendChild(meta);
     card.appendChild(text);
     body.appendChild(card);
 
